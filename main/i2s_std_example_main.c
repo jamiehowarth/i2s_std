@@ -14,11 +14,33 @@
 #include "sdkconfig.h"
 #include "i2s_example_pins.h"
 
+static const char *TAG = "Audio Player";
+
+#define BLINK_GPIO 2             //CONFIG_BLINK_GPIO
+#define CONFIG_BLINK_PERIOD 1000 // ms
+
+static uint8_t s_led_state = 0;
+
+static void configure_led(void)
+{
+    ESP_LOGI(TAG, "Configured to blink GPIO LED!");
+    gpio_reset_pin(BLINK_GPIO);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
+}
+
+static void blink_led(void)
+{
+    /* Set the GPIO level according to the state (LOW or HIGH)*/
+    gpio_set_level(BLINK_GPIO, s_led_state);
+    s_led_state = !s_led_state;
+}
+
 /* Set 1 to allocate rx & tx channels in duplex mode on a same I2S controller, they will share the BCLK and WS signal
  * Set 0 to allocate rx & tx channels in simplex mode, these two channels will be totally separated,
  * Specifically, due to the hardware limitation, the simplex rx & tx channels can't be registered on the same controllers on ESP32 and ESP32-S2,
  * and ESP32-S2 has only one I2S controller, so it can't allocate two simplex channels */
-#define EXAMPLE_I2S_DUPLEX_MODE         CONFIG_USE_DUPLEX
+#define EXAMPLE_I2S_DUPLEX_MODE     CONFIG_USE_DUPLEX
 
 #define EXAMPLE_STD_BCLK_IO1        EXAMPLE_I2S_BCLK_IO1      // I2S bit clock io number
 #define EXAMPLE_STD_WS_IO1          EXAMPLE_I2S_WS_IO1      // I2S word select io number
@@ -97,6 +119,7 @@ static void i2s_example_write_task(void *args)
         } else {
             printf("Write Task: i2s write failed\n");
         }
+        blink_led();
         vTaskDelay(pdMS_TO_TICKS(200));
     }
     free(w_buf);
@@ -203,6 +226,9 @@ void app_main(void)
 #else
     i2s_example_init_std_simplex();
 #endif
+
+    /* Configure the peripheral according to the LED type */
+    configure_led();
 
     /* Step 3: Create writing and reading task, enable and start the channels */
     xTaskCreate(i2s_example_read_task, "i2s_example_read_task", 4096, NULL, 5, NULL);

@@ -231,6 +231,9 @@ void app_main(void)
     configure_led();
 
     /* Step 3: Create writing and reading task, enable and start the channels */
-    xTaskCreate(i2s_example_read_task, "i2s_example_read_task", 4096, NULL, 5, NULL);
+    
+    // Jamie Dispable read 
+    //xTaskCreate(i2s_example_read_task, "i2s_example_read_task", 4096, NULL, 5, NULL);
+    
     xTaskCreate(i2s_example_write_task, "i2s_example_write_task", 4096, NULL, 5, NULL);
 }
